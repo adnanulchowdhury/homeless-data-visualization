@@ -6,7 +6,7 @@ class DataController < ApplicationController
   # GET /data.json
 
   def index
-    @file = File.read('config/dhs.json')
+    @file = File.read('config/homelessdataNYC.json')
     @data = JSON.parse(@file)
   end
 

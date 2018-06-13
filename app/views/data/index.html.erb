@@ -14,14 +14,14 @@
   </body>
 
 
-<%# <script src="https://d3js.org/d3.v5.js"></script> %>
+<script src="https://d3js.org/d3.v5.js"></script>
 
 
 
 <script>
 var margin = { left:100, right:100, top:50, bottom:100 },
-    height = 500 - margin.top - margin.bottom, 
-    width = 800 - margin.left - margin.right;
+    height = 700 - margin.top - margin.bottom, 
+    width = 1200 - margin.left - margin.right;
 
 var svg = d3.select("#data-graph")
     .append("svg")
@@ -32,9 +32,9 @@ var g = svg.append("g")
             ", " + margin.top + ")");
 
 // Time parser for x-scale
-var parseTime = d3.timeParse("%Y");
+var parseTime = d3.timeParse("%m/%d/%Y");
 // For tooltip
-var bisectDate = d3.bisector(function(d) { return d.date_of_census; }).left;
+var bisectDate = d3.bisector(function(d) { return d.Date_of_Census; }).left;
 
 // Scales
 var x = d3.scaleTime().range([0, width]);
@@ -42,9 +42,10 @@ var y = d3.scaleLinear().range([height, 0]);
 
 // Axis generators
 var xAxisCall = d3.axisBottom()
+    .ticks(6)
 var yAxisCall = d3.axisLeft()
     .ticks(6)
-    .tickFormat(function(d) { return parseInt(d / 1000) + "k"; });
+    .tickFormat(function(d) { return (d / 1000) + "k"; });
 
 // Axis groups
 var xAxis = g.append("g")
@@ -65,25 +66,26 @@ yAxis.append("text")
 
 // Line path generator
 var line = d3.line()
-    .x(function(d) { return x(d.year); })
-    .y(function(d) { return y(d.total_individuals_in_shelter); });
+    .x(function(d) { return x(d.Date_of_Census); })
+    .y(function(d) { return y(d.Total_Individuals_in_Shelter); });
 
-d3.json("https://raw.githubusercontent.com/adnanulchowdhury/dhs-daily-report/master/dhs.json").then(function(data){
+d3.json("https://raw.githubusercontent.com/adnanulchowdhury/dhs-daily-report/master/homelessdataNYC.json").then(function(data){
     console.log(data);
 
     // Prepare and clean data
     
 
-        data.forEach(function(d){
-            d.date_of_census = parseTime(d.date_of_census)
-            d.total_individuals_in_shelter = +d.total_individuals_in_shelter;
+        data.homeless.forEach(function(d){
+            d.Date_of_Census= parseTime(d.Date_of_Census)
+            d.Total_Individuals_in_Shelter = +d.Total_Individuals_in_Shelter;
+            console.log(d.Total_Individuals_in_Shelter);
         } );
     
 
     // Set scale domains
-    x.domain(d3.extent(data, function(d) { return d.date_of_census; }));
-    y.domain([d3.min(data, function(d) { return d.total_individuals_in_shelter; }) / 1.005, 
-        d3.max(data, function(d) { return d.total_individuals_in_shelter; }) * 1.005]);
+    x.domain(d3.extent(data.homeless, function(d) { return d.Date_of_Census; }));
+    y.domain([d3.min(data.homeless, function(d) { return d.Total_Individuals_in_Shelter; }) / 1.005, 
+        d3.max(data.homeless, function(d) { return d.Total_Individuals_in_Shelter; }) * 1.005]);
 
     // Generate axes once scales have been set
     xAxis.call(xAxisCall.scale(x))
@@ -95,50 +97,50 @@ d3.json("https://raw.githubusercontent.com/adnanulchowdhury/dhs-daily-report/mas
         .attr("fill", "none")
         .attr("stroke", "grey")
         .attr("stroke-with", "3px")
-        .attr("d", line(data));
+        .attr("d", line(data.homeless));
 
     /******************************** Tooltip Code ********************************/
 
-    var focus = g.append("g")
-        .attr("class", "focus")
-        .style("display", "none");
+    // var focus = g.append("g")
+    //     .attr("class", "focus")
+    //     .style("display", "none");
 
-    focus.append("line")
-        .attr("class", "x-hover-line hover-line")
-        .attr("y1", 0)
-        .attr("y2", height);
+    // focus.append("line")
+    //     .attr("class", "x-hover-line hover-line")
+    //     .attr("y1", 0)
+    //     .attr("y2", height);
 
-    focus.append("line")
-        .attr("class", "y-hover-line hover-line")
-        .attr("x1", 0)
-        .attr("x2", width);
+    // focus.append("line")
+    //     .attr("class", "y-hover-line hover-line")
+    //     .attr("x1", 0)
+    //     .attr("x2", width);
 
-    focus.append("circle")
-        .attr("r", 7.5);
+    // focus.append("circle")
+    //     .attr("r", 7.5);
 
-    focus.append("text")
-        .attr("x", 15)
-        .attr("dy", ".31em");
+    // focus.append("text")
+    //     .attr("x", 15)
+    //     .attr("dy", ".31em");
 
-    g.append("rect")
-        .attr("class", "overlay")
-        .attr("width", width)
-        .attr("height", height)
-        .on("mouseover", function() { focus.style("display", null); })
-        .on("mouseout", function() { focus.style("display", "none"); })
-        .on("mousemove", mousemove);
+    // g.append("rect")
+    //     .attr("class", "overlay")
+    //     .attr("width", width)
+    //     .attr("height", height)
+    //     .on("mouseover", function() { focus.style("display", null); })
+    //     .on("mouseout", function() { focus.style("display", "none"); })
+    //     .on("mousemove", mousemove);
 
-    function mousemove() {
-        var x0 = x.invert(d3.mouse(this)[0]),
-            i = bisectDate(data, x0, 1),
-            d0 = data[i - 1],
-            d1 = data[i],
-            d = x0 - d0.date_of_census > d1.date_of_census - x0 ? d1 : d0;
-        focus.attr("transform", "translate(" + x(d.date_of_census) + "," + y(d.total_individuals_in_shelter) + ")");
-        focus.select("text").text(d.total_individuals_in_shelter);
-        focus.select(".x-hover-line").attr("y2", height - y(d.total_individuals_in_shelter));
-        focus.select(".y-hover-line").attr("x2", -x(d.date_of_census));
-    }
+    // function mousemove() {
+    //     var x0 = x.invert(d3.mouse(this)[0]),
+    //         i = bisectDate(data.homeless, x0, 1),
+    //         d0 = data.homeless[i - 1],
+    //         d1 = data.homeless[i],
+    //         d = x0 - d0.Date_of_Census > d1.Date_of_Census - x0 ? d1 : d0;
+    //     focus.attr("transform", "translate(" + x(d.Date_of_Census) + "," + y(d.Total_Individuals_in_Shelter) + ")");
+    //     focus.select("text").text(d.Total_Individuals_in_Shelter);
+    //     focus.select(".x-hover-line").attr("y2", height - y(d.Total_Individuals_in_Shelter));
+    //     focus.select(".y-hover-line").attr("x2", -x(d.Date_of_Census));
+    // }
 
 
 })
